@@ -16,6 +16,7 @@ app.use( cors( corsOption ) );
 // PRODUCT 
 const Product = require( "./model/Product.js" );
 
+// CREATE/ADD 
 app.post( "/api/products", async ( req, res ) => {
     try {
         const p = await Product.create( req.body );
@@ -25,6 +26,7 @@ app.post( "/api/products", async ( req, res ) => {
     }
 } )
 
+// RETRIVED/GET 
 app.get( "/api/products", async ( req, res ) => {
     try {
         const products = await Product.find().populate( 'category' );
