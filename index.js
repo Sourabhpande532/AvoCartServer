@@ -46,6 +46,29 @@ app.get( "/api/products/:productId", async ( req, res ) => {
     }
 } )
 
+// Update New fields in db 
+app.put( "/api/products/add-fields", async ( req, res ) => {
+    try {
+        const result = await Product.updateMany(
+            {}, //empty filter = select all product 
+            {
+                $set: {
+                    discount: 25,
+                    deliveryCharge: 199
+                }
+            }
+        );
+        res.json( {
+            message: "All products update successfully",
+            modifiedCount: result.modifiedCount
+        } )
+    } catch ( error ) {
+        console.error( error );
+        res.status( 500 ).json( { error: "Something went wrong" } )
+    }
+} )
+
+
 const Category = require( "./model/Category.js" );
 // CATEGORIES ADDED 
 app.post( "/api/categories", async ( req, res ) => {
@@ -100,10 +123,20 @@ app.get( "/api/cart", async ( req, res ) => {
 // CREATING 
 // Don't confused here productId name it just replace product to ProductId distructuring renaming it.
 app.post( "/api/cart", async ( req, res ) => {
+    // get data from frontend & USING Post request add product to cart  
     const { userId = 'default', productId } = req.body;
+
     let item = await CartItem.findOne( { userId, product: productId } );
-    if ( item ) { item.qty += 1; await item.save(); }
-    else { item = await CartItem.create( { userId, product: productId, qty: 1 } ); }
+    // If product already exists => Just increse Quantity 
+    if ( item ) {
+        item.qty += 1;
+        await item.save();
+    }
+    // If product is not in cart, create a new entry
+    else {
+        item = await CartItem.create( { userId, product: productId, qty: 1 } );
+    }
+    // Updated cart:.find({ userId }) - get everything belonging to that user e.g ramesh,or suresh
     const items = await CartItem.find( { userId } ).populate( 'product' );
     res.json( { data: { cart: items } } );
 } )
@@ -140,13 +173,17 @@ app.get( "/api/wishlist", async ( req, res ) => {
 } )
 
 app.post( '/api/wishlist', async ( req, res ) => {
+    //NOTE: renaming here product: productId
     const { userId = 'default', productId } = req.body;
+    // This checks if the product is already in the user’s wishlist
     const exists = await WishlistItem.findOne( { userId, product: productId } );
     if ( exists ) {
         const items = await WishlistItem.find( { userId } ).populate( 'product' );
         return res.json( { data: { wishlist: items } } );
     }
+    // If the product doesn’t exist already, this line adds it add new wishlist item.
     await WishlistItem.create( { userId, product: productId } );
+    // After adding, it fetches the new full wishlist again — now including the newly added product.
     const items = await WishlistItem.find( { userId } ).populate( 'product' );
     res.json( { data: { wishlist: items } } );
 } );
@@ -157,6 +194,8 @@ app.delete( '/api/wishlist/:id', async ( req, res ) => {
     res.json( { message: 'Deleted' } );
 } );
 
+
+
 // ADDRESS 
 const Address = require( "./model/Address.js" );
 app.get( '/api/addresses', async ( req, res ) => {
@@ -166,40 +205,40 @@ app.get( '/api/addresses', async ( req, res ) => {
 } );
 
 // CREATE 
-app.post('/api/addresses', async (req, res) => {
-  const { userId='default' } = req.body;
-  const addr = await Address.create({ ...req.body, userId });
-  const addresses = await Address.find({ userId });
-  res.json({ data: { addresses } });
-});
+app.post( '/api/addresses', async ( req, res ) => {
+    const { userId = 'default' } = req.body;
+    const addr = await Address.create( { ...req.body, userId } );
+    const addresses = await Address.find( { userId } );
+    res.json( { data: { addresses } } );
+} );
 
 // UPADATE
-app.put('/api/addresses/:id', async (req, res) => {
-  const addr = await Address.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json({ data: { address: addr } });
-});
+app.put( '/api/addresses/:id', async ( req, res ) => {
+    const addr = await Address.findByIdAndUpdate( req.params.id, req.body, { new: true } );
+    res.json( { data: { address: addr } } );
+} );
 
 // DELETE 
-app.delete('/api/addresses/:id', async (req, res) => {
-  await Address.findByIdAndDelete(req.params.id);
-  res.json({ message: 'Deleted' });
-});
+app.delete( '/api/addresses/:id', async ( req, res ) => {
+    await Address.findByIdAndDelete( req.params.id );
+    res.json( { message: 'Deleted' } );
+} );
 
 // ORDERED 
 
-const Order = require("./model/Order.js");
+const Order = require( "./model/Order.js" );
 
-app.get('/api/orders', async (req, res) => {
-  const userId = req.query.userId || 'default';
-  const orders = await Order.find({ userId }).populate('items.product');
-  res.json({ data: { orders } });
-});
+app.get( '/api/orders', async ( req, res ) => {
+    const userId = req.query.userId || 'default';
+    const orders = await Order.find( { userId } ).populate( 'items.product' );
+    res.json( { data: { orders } } );
+} );
 
-app.post('/api/orders', async (req, res) => {
-  const { userId='default', items, total, address } = req.body;
-  const order = await Order.create({ userId, items, total, address });
-  res.json({ data: { order } });
-});
+app.post( '/api/orders', async ( req, res ) => {
+    const { userId = 'default', items, total, address } = req.body;
+    const order = await Order.create( { userId, items, total, address } );
+    res.json( { data: { order } } );
+} );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello, Welcome to express routes." );
