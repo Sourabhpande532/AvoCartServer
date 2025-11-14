@@ -27,14 +27,14 @@ app.post( "/api/products", async ( req, res ) => {
 } )
 
 // RETRIVED/GET 
-app.get( "/api/products", async ( req, res ) => {
-    try {
-        const products = await Product.find().populate( 'category' );
-        res.json( { data: { products } } );
-    } catch ( err ) {
-        res.status( 500 ).json( { error: err.message } );
-    }
-} )
+// app.get( "/api/products", async ( req, res ) => {
+//     try {
+//         const products = await Product.find().populate( 'category' );
+//         res.json( { data: { products } } );
+//     } catch ( err ) {
+//         res.status( 500 ).json( { error: err.message } );
+//     }
+// } )
 
 app.get( "/api/products/:productId", async ( req, res ) => {
     try {
@@ -45,6 +45,16 @@ app.get( "/api/products/:productId", async ( req, res ) => {
         res.status( 500 ).json( { error: err.message } );
     }
 } )
+
+app.get('/api/products', async (req, res) => {
+  try {
+    const query = {};
+    if (req.query.category) query.category = req.query.category;
+    if (req.query.search) query.title = { $regex: req.query.search, $options: 'i' };
+    const products = await Product.find(query).populate('category');
+    res.json({ data: { products } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // Update New fields in db 
 app.put( "/api/products/add-fields", async ( req, res ) => {
@@ -121,7 +131,6 @@ app.get( "/api/cart", async ( req, res ) => {
 } )
 
 // CREATING 
-// Don't confused here productId name it just replace product to ProductId distructuring renaming it.
 app.post( "/api/cart", async ( req, res ) => {
     // get data from frontend & USING Post request add product to cart  
     const { userId = 'default', productId } = req.body;
@@ -140,6 +149,9 @@ app.post( "/api/cart", async ( req, res ) => {
     const items = await CartItem.find( { userId } ).populate( 'product' );
     res.json( { data: { cart: items } } );
 } )
+
+/* REF: Understand->https://stackblitz.com/edit/vitejs-vite-rrspmzx7?file=src%2Fapp.jsx,src%2Fmain.jsx,src%2Fcomponent%2FStudentDetails.jsx&terminal=dev */
+
 
 // UPADATE 
 app.put( '/api/cart/:id', async ( req, res ) => {
