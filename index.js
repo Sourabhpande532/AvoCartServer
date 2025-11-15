@@ -45,7 +45,7 @@ app.get( "/api/products/:productId", async ( req, res ) => {
         res.status( 500 ).json( { error: err.message } );
     }
 } )
-
+// Get all category + product on search 
 app.get('/api/products', async (req, res) => {
   try {
     const query = {};
@@ -133,17 +133,17 @@ app.get( "/api/cart", async ( req, res ) => {
 // CREATING 
 app.post( "/api/cart", async ( req, res ) => {
     // get data from frontend & USING Post request add product to cart  
-    const { userId = 'default', productId } = req.body;
+    const { userId = 'default', productId, qty=1 } = req.body;
 
     let item = await CartItem.findOne( { userId, product: productId } );
     // If product already exists => Just increse Quantity 
     if ( item ) {
-        item.qty += 1;
+        item.qty += Number(qty);
         await item.save();
     }
     // If product is not in cart, create a new entry
     else {
-        item = await CartItem.create( { userId, product: productId, qty: 1 } );
+        item = await CartItem.create( { userId, product: productId, qty: Number(qty) } );
     }
     // Updated cart:.find({ userId }) - get everything belonging to that user e.g ramesh,or suresh
     const items = await CartItem.find( { userId } ).populate( 'product' );
@@ -236,8 +236,7 @@ app.delete( '/api/addresses/:id', async ( req, res ) => {
     res.json( { message: 'Deleted' } );
 } );
 
-// ORDERED 
-
+// ORDERED + CARTITEM SCEMA REQUIRED TO DELETE THIS 
 const Order = require( "./model/Order.js" );
 
 app.get( '/api/orders', async ( req, res ) => {
@@ -249,6 +248,8 @@ app.get( '/api/orders', async ( req, res ) => {
 app.post( '/api/orders', async ( req, res ) => {
     const { userId = 'default', items, total, address } = req.body;
     const order = await Order.create( { userId, items, total, address } );
+    // clear cart for this user 
+    await CartItem.deleteMany({userId});
     res.json( { data: { order } } );
 } );
 
