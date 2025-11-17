@@ -97,18 +97,54 @@ app.post("/api/categories", async (req, res) => {
 app.get("/api/categories", async (req, res) => {
   try {
     const categories = await Category.find();
-    res.json({ data: { categories } });
+    res.json({
+      success: true,
+      message: "Category created successfully",
+      data: { categories },
+      meta: {
+        timestamp: new Date(),
+        requestId: "REQ-" + Date.now(),
+      },
+      collection: [
+        {
+          name: "Summer collection",
+          description: "lorem text out best winter xl texhe dfh",
+          img: "https://placehold.co/100",
+        },
+        {
+          name: "Summer collection",
+          description: "lorem text out best winter xl texhe dfh",
+          img: "https://placehold.co/150",
+        },
+      ],
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, server: err.message });
   }
 });
+/*✔ Debuggable
+meta helps track logs, versioning, debugging.*/
 
 app.get("/api/categories/:categoryId", async (req, res) => {
   try {
     const category = await Category.findById(req.params.categoryId);
     if (!category)
       return res.status(404).json({ message: "Category not found" });
-    res.json({ data: { category } });
+    res.json({
+      data: { category },
+      message: "Category fetched successfully",
+      success: true,
+      meta: {
+        requestId: "REQ-" + Date.now(),
+        apiVersion: "1.1",
+        timestamp: new Date(),
+      },
+      user: {
+        id: "123",
+        role: "admin",
+        permissions: ["create", "update"],
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
