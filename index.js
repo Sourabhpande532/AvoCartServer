@@ -113,7 +113,7 @@ app.get("/api/categories", async (req, res) => {
         },
         {
           name: "Summer collection",
-          description: "lorem text out best winter xl texhe dfh",
+          description: "lorem text out best winter xl texhe df",
           img: "https://placehold.co/150",
         },
       ],
@@ -168,15 +168,19 @@ app.get("/api/cart", async (req, res) => {
   const userId = req.query.userId || "default";
   // res.send( `User Id received: ${ userId }`)
   const items = await CartItem.find({ userId }).populate("product");
-  res.json({ data: { cart: items } });
+  res.json({success:true, data: { cart: items } });
 });
 
 // CREATING
 app.post("/api/cart", async (req, res) => {
   // get data from frontend & USING Post request add product to cart
-  const { userId = "default", productId, qty = 1 } = req.body;
+  const { userId = "default", productId, qty = 1, size = "" } = req.body;
 
-  let item = await CartItem.findOne({ userId, product: productId });
+  let item = await CartItem.findOne({
+    userId,
+    product: productId,
+    size: size,
+  });
   // If product already exists => Just increse Quantity
   if (item) {
     item.qty += Number(qty);
@@ -188,11 +192,16 @@ app.post("/api/cart", async (req, res) => {
       userId,
       product: productId,
       qty: Number(qty),
+      size,
     });
   }
   // Updated cart:.find({ userId }) - get everything belonging to that user e.g ramesh,or suresh
   const items = await CartItem.find({ userId }).populate("product");
-  res.json({ data: { cart: items } });
+  res.json({
+    success: true,
+    message: "Item added to cart",
+    data: { cart: items },
+  });
 });
 
 /* REF: Understand->https://stackblitz.com/edit/vitejs-vite-rrspmzx7?file=src%2Fapp.jsx,src%2Fmain.jsx,src%2Fcomponent%2FStudentDetails.jsx&terminal=dev */
@@ -205,6 +214,28 @@ app.put("/api/cart/:id", async (req, res) => {
   item.qty = qty;
   await item.save();
   res.json({ data: { item } });
+});
+
+// Add fields to all this two into existing one 
+app.put("/api/cartitem/add", async (req, res) => {
+  try {
+    const result = await CartItem.updateMany(
+      {}, //empty filter = select all product
+      {
+        $set: {
+          size: "XL",
+          sizes: ["S", "M", "XXL", "XL"],
+        },
+      }
+    );
+    res.json({
+      message: "All cart update successfully",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
 });
 
 // DELETE
