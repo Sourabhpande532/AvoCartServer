@@ -16,38 +16,51 @@ app.use(cors(corsOption));
 // PRODUCT
 const Product = require("./model/Product.js");
 
-// CREATE/ADD
+// CREATE PRODUCT
 app.post("/api/products", async (req, res) => {
   try {
     const p = await Product.create(req.body);
-    res.json({ data: { product: p } });
+    res.status(200).json({
+      success: true,
+      message: "Product created successfully",
+      data: { product: p },
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error creating product:", error.message);
+    res.status(500).json({
+      suceess: false,
+      message: "Failed to create product",
+      error: error.message,
+    });
   }
 });
-
-// RETRIVED/GET
-// app.get( "/api/products", async ( req, res ) => {
-//     try {
-//         const products = await Product.find().populate( 'category' );
-//         res.json( { data: { products } } );
-//     } catch ( err ) {
-//         res.status( 500 ).json( { error: err.message } );
-//     }
-// } )
-
+// GET PRODUCT BY ID
 app.get("/api/products/:productId", async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId).populate(
       "category"
     );
-    if (!product) return res.status(404).json({ message: "Product not found" });
-    res.json({ data: { product } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!product)
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    res.json({
+      success: true,
+      message: "Product fetched successfully",
+      data: { product },
+    });
+  } catch (error) {
+    console.error("Error fetching product:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch product",
+      error: err.message,
+    });
   }
 });
-// Get all category + product on search
+
+// GET ALL PRODUCT WITH QUERY SUPOORT
 app.get("/api/products", async (req, res) => {
   try {
     const query = {};
@@ -55,17 +68,26 @@ app.get("/api/products", async (req, res) => {
     if (req.query.search)
       query.title = { $regex: req.query.search, $options: "i" };
     const products = await Product.find(query).populate("category");
-    res.json({ data: { products } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json({
+      success: true,
+      message: "Product Fetched successfully",
+      data: { products },
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
   }
 });
 
-// Update New fields in db
+// ADD FIELDS TO ALL PRODUCTS
 app.put("/api/products/add-fields", async (req, res) => {
   try {
     const result = await Product.updateMany(
-      {}, //empty filter = select all product
+      {},
       {
         $set: {
           discount: 25,
@@ -74,17 +96,21 @@ app.put("/api/products/add-fields", async (req, res) => {
       }
     );
     res.json({
+      success:true,
       message: "All products update successfully",
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    console.error("Error updating all products:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update products",
+      error: error.message
+    });
   }
 });
 
 const Category = require("./model/Category.js");
-// CATEGORIES ADDED
 app.post("/api/categories", async (req, res) => {
   try {
     const c = await Category.create(req.body);
@@ -122,8 +148,6 @@ app.get("/api/categories", async (req, res) => {
     res.status(500).json({ success: false, server: err.message });
   }
 });
-/*✔ Debuggable
-meta helps track logs, versioning, debugging.*/
 
 app.get("/api/categories/:categoryId", async (req, res) => {
   try {
@@ -153,27 +177,14 @@ app.get("/api/categories/:categoryId", async (req, res) => {
 // CART ITEM
 const CartItem = require("./model/CartItem.js");
 
-/* OPTIONAL ADDING use wheneve fill
-   if you want to increate qty:++ then use this 
-app.post( "/api/add/cart", async ( req, res ) => {
-    try {
-        const items = await CartItem.create( req.body );
-        res.json( { data: { cart: items } } )
-    } catch ( error ) {
-        res.status( 500 ).json( { error: "internal error" } )
-    }
-} ) */
-
 app.get("/api/cart", async (req, res) => {
   const userId = req.query.userId || "default";
-  // res.send( `User Id received: ${ userId }`)
   const items = await CartItem.find({ userId }).populate("product");
-  res.json({success:true, data: { cart: items } });
+  res.json({ success: true, data: { cart: items } });
 });
 
 // CREATING
 app.post("/api/cart", async (req, res) => {
-  // get data from frontend & USING Post request add product to cart
   const { userId = "default", productId, qty = 1, size = "" } = req.body;
 
   let item = await CartItem.findOne({
@@ -181,13 +192,10 @@ app.post("/api/cart", async (req, res) => {
     product: productId,
     size: size,
   });
-  // If product already exists => Just increse Quantity
   if (item) {
     item.qty += Number(qty);
     await item.save();
-  }
-  // If product is not in cart, create a new entry
-  else {
+  } else {
     item = await CartItem.create({
       userId,
       product: productId,
@@ -195,7 +203,7 @@ app.post("/api/cart", async (req, res) => {
       size,
     });
   }
-  // Updated cart:.find({ userId }) - get everything belonging to that user e.g ramesh,or suresh
+
   const items = await CartItem.find({ userId }).populate("product");
   res.json({
     success: true,
@@ -203,8 +211,6 @@ app.post("/api/cart", async (req, res) => {
     data: { cart: items },
   });
 });
-
-/* REF: Understand->https://stackblitz.com/edit/vitejs-vite-rrspmzx7?file=src%2Fapp.jsx,src%2Fmain.jsx,src%2Fcomponent%2FStudentDetails.jsx&terminal=dev */
 
 // UPADATE
 app.put("/api/cart/:id", async (req, res) => {
@@ -216,7 +222,7 @@ app.put("/api/cart/:id", async (req, res) => {
   res.json({ data: { item } });
 });
 
-// Add fields to all this two into existing one 
+// UPADATE EXISTING
 app.put("/api/cartitem/add", async (req, res) => {
   try {
     const result = await CartItem.updateMany(
@@ -313,7 +319,7 @@ app.delete("/api/addresses/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-// ORDERED + CARTITEM SCEMA REQUIRED TO DELETE THIS
+// ORDERED
 const Order = require("./model/Order.js");
 
 app.get("/api/orders", async (req, res) => {
