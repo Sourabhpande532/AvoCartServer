@@ -84,7 +84,7 @@ app.get("/api/products", async (req, res) => {
 });
 
 // ADD FIELDS TO ALL PRODUCTS
-app.put("/api/products/add-fields", async (req, res) => {
+app.put("/api/products/add_fields", async (req, res) => {
   try {
     const result = await Product.updateMany(
       {},
