@@ -446,54 +446,198 @@ app.delete("/api/wishlist/:id", async (req, res) => {
 
 // ADDRESS
 const Address = require("./model/Address.js");
+// GET ADDRESSES
 app.get("/api/addresses", async (req, res) => {
-  const userId = req.query.userId || "default";
-  const addresses = await Address.find({ userId });
-  res.json({ data: { addresses } });
+  try {
+    const userId = req.query.userId || "default";
+    const addresses = await Address.find({ userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Addresses fetched successfully",
+      data: { addresses },
+    });
+  } catch (error) {
+    console.error("Error fetching addresses:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch addresses",
+      error: error.message,
+    });
+  }
 });
 
-// CREATE
+// CREATE ADDRESS
 app.post("/api/addresses", async (req, res) => {
-  const { userId = "default" } = req.body;
-  const addr = await Address.create({ ...req.body, userId });
-  const addresses = await Address.find({ userId });
-  res.json({ data: { addresses } });
+  try {
+    const { userId = "default" } = req.body;
+
+    const addr = await Address.create({
+      ...req.body,
+      userId,
+    });
+
+    const addresses = await Address.find({ userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Address added successfully",
+      data: { addresses },
+    });
+  } catch (error) {
+    console.error("Error creating address:", error.message);
+    return res.status(400).json({
+      success: false,
+      message: "Failed to create address",
+      error: error.message,
+    });
+  }
 });
 
-// UPADATE
+// UPDATE ADDRESS
 app.put("/api/addresses/:id", async (req, res) => {
-  const addr = await Address.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  res.json({ data: { address: addr } });
+  try {
+    const addr = await Address.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+
+    if (!addr) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      data: { address: addr },
+    });
+  } catch (error) {
+    console.error("Error updating address:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update address",
+      error: error.message,
+    });
+  }
 });
 
-// DELETE
+// DELETE ADDRESS
 app.delete("/api/addresses/:id", async (req, res) => {
-  await Address.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  try {
+    const deleted = await Address.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Address deleted successfully",
+      data: { deleted },
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete address",
+      error: error.message,
+    });
+  }
 });
 
 // ORDERED
 const Order = require("./model/Order.js");
 
+// GET ORDERS FOR USER
 app.get("/api/orders", async (req, res) => {
-  const userId = req.query.userId || "default";
-  const orders = await Order.find({ userId }).populate("items.product");
-  res.json({ data: { orders } });
+  try {
+    const userId = req.query.userId || "default";
+    const orders = await Order.find({ userId }).populate("items.product");
+
+    return res.status(200).json({
+      success: true,
+      message: "Orders fetched successfully",
+      data: { orders },
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message,
+    });
+  }
 });
 
+// CREATE ORDER
 app.post("/api/orders", async (req, res) => {
-  const { userId = "default", items, total, address } = req.body;
-  const order = await Order.create({ userId, items, total, address });
-  // clear cart for this user
-  await CartItem.deleteMany({ userId });
-  res.json({ data: { order } });
+  try {
+    const { userId = "default", items, total, address } = req.body;
+
+    // basic validation (do not change core logic)
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "items is required and should be a non-empty array",
+      });
+    }
+    if (total === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "total is required",
+      });
+    }
+
+    const order = await Order.create({ userId, items, total, address });
+
+    // clear cart for this user (keeps your original logic)
+    await CartItem.deleteMany({ userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Order created successfully",
+      data: { order },
+    });
+  } catch (error) {
+    console.error("Error creating order:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create order",
+      error: error.message,
+    });
+  }
 });
 
+// DELETE ORDER
 app.delete("/api/orders/:id", async (req, res) => {
-  await Order.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  try {
+    const deleted = await Order.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order deleted successfully",
+      data: { deleted },
+    });
+  } catch (error) {
+    console.error("Error deleting order:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete order",
+      error: error.message,
+    });
+  }
 });
 
 app.get("/", (req, res) => {
