@@ -96,7 +96,7 @@ app.put("/api/products/add-fields", async (req, res) => {
       }
     );
     res.json({
-      success:true,
+      success: true,
       message: "All products update successfully",
       modifiedCount: result.modifiedCount,
     });
@@ -105,7 +105,7 @@ app.put("/api/products/add-fields", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update products",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -113,10 +113,19 @@ app.put("/api/products/add-fields", async (req, res) => {
 const Category = require("./model/Category.js");
 app.post("/api/categories", async (req, res) => {
   try {
-    const c = await Category.create(req.body);
-    res.json({ data: { category: c } });
+    const category = await Category.create(req.body);
+    res.json({
+      suceess: true,
+      message: "Category created successfully",
+      data: { category },
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error creating category:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create category",
+      error: error.message,
+    });
   }
 });
 
@@ -144,8 +153,13 @@ app.get("/api/categories", async (req, res) => {
         },
       ],
     });
-  } catch (err) {
-    res.status(500).json({ success: false, server: err.message });
+  } catch (error) {
+    console.error("Error fetching categories:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch categories",
+      error: error.message,
+    });
   }
 });
 
@@ -169,64 +183,126 @@ app.get("/api/categories/:categoryId", async (req, res) => {
         permissions: ["create", "update"],
       },
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error("Error fetching category:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch category",
+      error: error.message,
+    });
   }
 });
 
 // CART ITEM
 const CartItem = require("./model/CartItem.js");
-
+// GET CART ITEMS FOR USER
 app.get("/api/cart", async (req, res) => {
-  const userId = req.query.userId || "default";
-  const items = await CartItem.find({ userId }).populate("product");
-  res.json({ success: true, data: { cart: items } });
-});
+  try {
+    const userId = req.query.userId || "default";
+    const items = await CartItem.find({ userId }).populate("product");
 
-// CREATING
-app.post("/api/cart", async (req, res) => {
-  const { userId = "default", productId, qty = 1, size = "" } = req.body;
-
-  let item = await CartItem.findOne({
-    userId,
-    product: productId,
-    size: size,
-  });
-  if (item) {
-    item.qty += Number(qty);
-    await item.save();
-  } else {
-    item = await CartItem.create({
-      userId,
-      product: productId,
-      qty: Number(qty),
-      size,
+    res.status(200).json({
+      success: true,
+      message: "Cart fetched successfully",
+      data: { cart: items },
+    });
+  } catch (error) {
+    console.error("Error fetching cart:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch cart",
+      error: error.message,
     });
   }
-
-  const items = await CartItem.find({ userId }).populate("product");
-  res.json({
-    success: true,
-    message: "Item added to cart",
-    data: { cart: items },
-  });
 });
 
-// UPADATE
+// ADD ITEM TO CART
+app.post("/api/cart", async (req, res) => {
+  try {
+    const { userId = "default", productId, qty = 1, size = "" } = req.body;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "productId is required",
+      });
+    }
+    let item = await CartItem.findOne({
+      userId,
+      product: productId,
+      size,
+    });
+    if (item) {
+      item.qty += Number(qty);
+      await item.save();
+    } else {
+      item = await CartItem.create({
+        userId,
+        product: productId,
+        qty: Number(qty),
+        size,
+      });
+    }
+    const items = await CartItem.find({ userId }).populate("product");
+    res.status(200).json({
+      success: true,
+      message: "Item added to cart",
+      data: { cart: items },
+    });
+  } catch (error) {
+    console.error("Error adding item to cart:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add item to cart",
+      error: error.message,
+    });
+  }
+});
+
+// UPDATE CART ITEM QTY
 app.put("/api/cart/:id", async (req, res) => {
-  const { qty } = req.body;
-  const item = await CartItem.findById(req.params.id);
-  if (!item) return res.status(404).json({ message: "Not found" });
-  item.qty = qty;
-  await item.save();
-  res.json({ data: { item } });
+  try {
+    const { qty } = req.body;
+
+    if (qty === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "qty is required",
+      });
+    }
+
+    const item = await CartItem.findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
+
+    item.qty = qty;
+    await item.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart item updated successfully",
+      data: { item },
+    });
+  } catch (error) {
+    console.error("Error updating cart item:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update cart item",
+      error: error.message,
+    });
+  }
 });
 
-// UPADATE EXISTING
+// UPDATE EXISTING CART ITEMS (ADD SIZES)
 app.put("/api/cartitem/add", async (req, res) => {
   try {
     const result = await CartItem.updateMany(
-      {}, //empty filter = select all product
+      {},
       {
         $set: {
           size: "XL",
@@ -234,59 +310,138 @@ app.put("/api/cartitem/add", async (req, res) => {
         },
       }
     );
-    res.json({
-      message: "All cart update successfully",
+
+    return res.status(200).json({
+      success: true,
+      message: "All cart items updated successfully",
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    console.error("Error updating cart items:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update cart items",
+      error: error.message,
+    });
   }
 });
 
-// DELETE
+// DELETE CART ITEM
 app.delete("/api/cart/:id", async (req, res) => {
   try {
     const cartItem = await CartItem.findByIdAndDelete(req.params.id);
-    if (!cartItem) return res.status(404).json({ message: "item not found" });
-    res.json({ message: "Deleted", cart: cartItem });
+    if (!cartItem) {
+      res.status(404).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Cart item deleted",
+      cart: cartItem,
+    });
   } catch (error) {
-    console.error("cannot delte via id", error.message);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal Error", err: error.message });
+    console.error("Error deleting cart item:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete cart item",
+      error: error.message,
+    });
   }
 });
 
 // WISHLIST
 const WishlistItem = require("./model/WishlistItem.js");
 
+// GET WISHLIST ITEMS
 app.get("/api/wishlist", async (req, res) => {
-  const userId = req.query.userId || "default";
-  const items = await WishlistItem.find({ userId }).populate("product");
-  res.json({ data: { wishlist: items } });
-});
-
-app.post("/api/wishlist", async (req, res) => {
-  //NOTE: renaming here product: productId
-  const { userId = "default", productId } = req.body;
-  // This checks if the product is already in the user’s wishlist
-  const exists = await WishlistItem.findOne({ userId, product: productId });
-  if (exists) {
+  try {
+    const userId = req.query.userId || "default";
     const items = await WishlistItem.find({ userId }).populate("product");
-    return res.json({ data: { wishlist: items } });
+
+    res.status(200).json({
+      success: true,
+      message: "Wishlist fetched successfully",
+      data: { wishlist: items },
+    });
+  } catch (error) {
+    console.error("Error fetching wishlist:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch wishlist",
+      error: error.message,
+    });
   }
-  // If the product doesn’t exist already, this line adds it add new wishlist item.
-  await WishlistItem.create({ userId, product: productId });
-  // After adding, it fetches the new full wishlist again — now including the newly added product.
-  const items = await WishlistItem.find({ userId }).populate("product");
-  res.json({ data: { wishlist: items } });
 });
 
-// DELETED
+// ADD ITEM TO WISHLIST
+app.post("/api/wishlist", async (req, res) => {
+  try {
+    const { userId = "default", productId } = req.body;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "productId is required",
+      });
+    }
+
+    // Check if exists
+    const exists = await WishlistItem.findOne({ userId, product: productId });
+
+    if (exists) {
+      const items = await WishlistItem.find({ userId }).populate("product");
+      return res.status(200).json({
+        success: true,
+        message: "Item already exists in wishlist",
+        data: { wishlist: items },
+      });
+    }
+    await WishlistItem.create({ userId, product: productId });
+
+    const items = await WishlistItem.find({ userId }).populate("product");
+
+    return res.status(200).json({
+      success: true,
+      message: "Item added to wishlist",
+      data: { wishlist: items },
+    });
+  } catch (error) {
+    console.error("Error adding wishlist item:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add item to wishlist",
+      error: error.message,
+    });
+  }
+});
+
+// DELETE ITEM FROM WISHLIST
 app.delete("/api/wishlist/:id", async (req, res) => {
-  await WishlistItem.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  try {
+    const deleted = await WishlistItem.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Wishlist item not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Wishlist item deleted",
+      data: { deleted },
+    });
+  } catch (error) {
+    console.error("Error deleting wishlist item:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete wishlist item",
+      error: error.message,
+    });
+  }
 });
 
 // ADDRESS
