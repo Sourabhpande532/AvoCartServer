@@ -19,11 +19,11 @@ const Product = require("./model/Product.js");
 // CREATE PRODUCT
 app.post("/api/products", async (req, res) => {
   try {
-    const p = await Product.create(req.body);
+    const productGenerate = await Product.create(req.body);
     res.status(200).json({
       success: true,
       message: "Product created successfully",
-      data: { product: p },
+      data: { product: productGenerate },
     });
   } catch (error) {
     console.error("Error creating product:", error.message);
