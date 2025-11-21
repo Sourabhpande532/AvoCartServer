@@ -201,14 +201,14 @@ app.get("/api/cart", async (req, res) => {
     const userId = req.query.userId || "default";
     const items = await CartItem.find({ userId }).populate("product");
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Cart fetched successfully",
       data: { cart: items },
     });
   } catch (error) {
     console.error("Error fetching cart:", error.message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch cart",
       error: error.message,
@@ -222,7 +222,7 @@ app.post("/api/cart", async (req, res) => {
     const { userId = "default", productId, qty = 1, size = "" } = req.body;
 
     if (!productId) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "productId is required",
       });
@@ -244,14 +244,14 @@ app.post("/api/cart", async (req, res) => {
       });
     }
     const items = await CartItem.find({ userId }).populate("product");
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Item added to cart",
       data: { cart: items },
     });
   } catch (error) {
     console.error("Error adding item to cart:", error.message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to add item to cart",
       error: error.message,
