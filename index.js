@@ -1,3 +1,5 @@
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const { initializeDatabase } = require("./db/db.connect");
 const express = require("express");
 const app = express();
@@ -6,7 +8,7 @@ initializeDatabase();
 
 const corsOption = {
   origin: "*",
-  credential: true,
+  credentials: true,
   optionSuccessStatus: 200,
 };
 
@@ -19,6 +21,7 @@ app.use("/api/cart", require("./routes/cart.js"));
 app.use("/api/wishlist", require("./routes/wishlist.js"));
 app.use("/api/addresses", require("./routes/addresses.js"));
 app.use("/api/orders", require("./routes/order.js"));
+app.use('/api/ai',require("./routes/aiRoutes.js"))
 
 app.get("/", (req, res) => {
   res.send("Hello, Welcome to express routes.");
