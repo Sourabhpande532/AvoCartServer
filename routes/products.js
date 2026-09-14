@@ -13,12 +13,13 @@ app.post("/", async (req, res) => {
   } catch (error) {
     console.error("Error creating product:", error.message);
     res.status(500).json({
-      suceess: false,
+      success: false,
       message: "Failed to create product",
       error: error.message,
     });
   }
 });
+
 // GET PRODUCT BY ID
 app.get("/:productId", async (req, res) => {
   try {
@@ -40,12 +41,12 @@ app.get("/:productId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch product",
-      error: err.message,
+      error: error.message,
     });
   }
 });
 
-// GET ALL PRODUCT WITH QUERY SUPOORT
+// GET ALL PRODUCT WITH QUERY SUPPORT
 app.get("/", async (req, res) => {
   try {
     const query = {};
