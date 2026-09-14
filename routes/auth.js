@@ -9,11 +9,11 @@ require('dotenv').config();
 const signToken = (user) =>
   jwt.sign(
     { userId: user._id, email: user.email, name: user.name, isGuest: user.isGuest },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || "fallback_jwt_secret",
     { expiresIn: '7d' }
   );
 
-// ─── SIGN UP ─
+// ─── SIGN UP ────
 router.post('/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -86,14 +86,14 @@ router.post('/guest', async (req, res) => {
   }
 });
 
-// ─── GET CURRENT USER (me) ────
+// ─── GET CURRENT USER (me) ───
 router.get('/me', async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ success: false, message: 'No token.' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_jwt_secret");
     const user = await User.findById(decoded.userId).select('-password');
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
@@ -106,26 +106,34 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// ─── GOOGLE OAUTH ──
+// ─── GOOGLE OAUTH ────
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
 
-router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/auth?error=google_failed` }),
-  (req, res) => {
-    const token = signToken(req.user);
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
-  }
-);
+router.get('/google/callback', (req, res, next) => {
+  passport.authenticate('google', { session: false }, (err, user, info) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://avo-cart-client.vercel.app';
+    if (err || !user) {
+      console.error("Google Auth Callback Error:", err?.message || info);
+      return res.redirect(`${frontendUrl}/auth?error=google_failed`);
+    }
+    const token = signToken(user);
+    return res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+  })(req, res, next);
+});
 
-// ─── GITHUB OAUTH ──
+// ─── GITHUB OAUTH ────
 router.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
 
-router.get('/github/callback',
-  passport.authenticate('github', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/auth?error=github_failed` }),
-  (req, res) => {
-    const token = signToken(req.user);
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
-  }
-);
+router.get('/github/callback', (req, res, next) => {
+  passport.authenticate('github', { session: false }, (err, user, info) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://avo-cart-client.vercel.app';
+    if (err || !user) {
+      console.error("GitHub Auth Callback Error:", err?.message || info);
+      return res.redirect(`${frontendUrl}/auth?error=github_failed`);
+    }
+    const token = signToken(user);
+    return res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+  })(req, res, next);
+});
 
 module.exports = router;

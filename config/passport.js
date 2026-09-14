@@ -9,23 +9,38 @@ passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.CALLBACK_URL,
+    callbackURL: process.env.CALLBACK_URL || 'https://avo-cart-server.vercel.app/auth/google/callback',
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      const email = profile.emails?.[0]?.value || null;
       let user = await User.findOne({ googleId: profile.id });
+
+      if (!user && email) {
+        // Find existing user by email to link Google account instead of failing with duplicate key error
+        user = await User.findOne({ email });
+        if (user) {
+          user.googleId = profile.id;
+          if (!user.avatar && profile.photos?.[0]?.value) {
+            user.avatar = profile.photos[0].value;
+          }
+          await user.save();
+        }
+      }
+
       if (!user) {
-        const email = profile.emails?.[0]?.value;
         user = await User.create({
-          name: profile.displayName,
+          name: profile.displayName || "Google User",
           email,
           googleId: profile.id,
-          avatar: profile.photos?.[0]?.value,
+          avatar: profile.photos?.[0]?.value || null,
           provider: 'google',
         });
       }
+
       return done(null, user);
     } catch (err) {
+      console.error("Google Strategy Error:", err.message);
       return done(err, null);
     }
   }
@@ -40,19 +55,33 @@ passport.use(new GitHubStrategy(
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      const email = profile.emails?.[0]?.value || null;
       let user = await User.findOne({ githubId: profile.id });
+
+      if (!user && email) {
+        user = await User.findOne({ email });
+        if (user) {
+          user.githubId = profile.id;
+          if (!user.avatar && profile.photos?.[0]?.value) {
+            user.avatar = profile.photos[0].value;
+          }
+          await user.save();
+        }
+      }
+
       if (!user) {
-        const email = profile.emails?.[0]?.value || null;
         user = await User.create({
-          name: profile.displayName || profile.username,
+          name: profile.displayName || profile.username || "GitHub User",
           email,
           githubId: profile.id,
-          avatar: profile.photos?.[0]?.value,
+          avatar: profile.photos?.[0]?.value || null,
           provider: 'github',
         });
       }
+
       return done(null, user);
     } catch (err) {
+      console.error("GitHub Strategy Error:", err.message);
       return done(err, null);
     }
   }
