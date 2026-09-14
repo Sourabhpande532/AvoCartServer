@@ -68,7 +68,6 @@ async function retrieveDatabaseKnowledgeBase(query) {
     }
 
     if (products && products.length > 0) {
-      // Search for specific matching products or categories mentioned in user query
       const matchingProducts = products.filter((p) => {
         const titleMatch = p.title?.toLowerCase().includes(q);
         const descMatch = p.description?.toLowerCase().includes(q);
@@ -76,7 +75,6 @@ async function retrieveDatabaseKnowledgeBase(query) {
         return titleMatch || descMatch || catMatch;
       });
 
-      // If specific query matches are found, present those; otherwise present a summary of the catalog
       const itemsToInclude = matchingProducts.length > 0 ? matchingProducts : products.slice(0, 8);
 
       const productDescriptions = itemsToInclude.map((p) => {
@@ -106,6 +104,14 @@ async function retrieveDatabaseKnowledgeBase(query) {
   return contextSegments.join("\n\n");
 }
 
+// Clean up meta prefixes like "safely safe" or system disclaimers
+function sanitizeAIReply(replyText) {
+  if (!replyText) return "";
+  return replyText
+    .replace(/^(safely safe|safely|as an ai|here is your response|here is the information)[\s\:\,\.\-]*/gi, "")
+    .trim();
+}
+
 // --- Controller Handler ---
 exports.handleChat = async (req, res) => {
   try {
@@ -116,7 +122,6 @@ exports.handleChat = async (req, res) => {
 
     console.log(`\n🔍 [RAG DB SEARCH] Fetching real database context for: "${message}"`);
     const retrievedContext = await retrieveDatabaseKnowledgeBase(message.trim());
-    console.log(`✅ [RAG CONTEXT BUILT]\n${retrievedContext}\n`);
 
     const SYSTEM_PROMPT = `
 You are a helpful and friendly AI shopping assistant for the AvoCart e-commerce store.
@@ -128,14 +133,14 @@ ${retrievedContext}
 Rules:
 1. Answer politely and concisely based strictly on the provided database context.
 2. When answering product questions, cite real product titles, categories, prices in ₹, ratings, and stock status from the context.
-3. If asked about a product or policy not present in the context, politely state that it's not in our store catalog and recommend checking our categories or contacting support.
-4. Keep answers clean, accurate, and direct. Do NOT invent fake products, prices, or store policies outside the context.
+3. Do NOT output safety disclaimers, intro meta-talk (like "safely safe", "As an AI", "Here is your response"), or system headers.
+4. If asked about a product or policy not present in the context, politely state that it's not in our store catalog and recommend checking our categories or contacting support.
+5. Keep answers clean, accurate, and direct. Do NOT invent fake products, prices, or store policies outside the context.
     `;
 
     let reply = null;
     let lastError = null;
 
-    // Model fallback loop over candidate models
     for (const modelName of MODEL_CANDIDATES) {
       try {
         console.log(`🤖 [AI CALL] Attempting model: ${modelName}...`);
@@ -149,9 +154,9 @@ Rules:
           temperature: 0.7
         });
 
-        const content = aiResp.choices?.[0]?.message?.content;
-        if (content && content.trim()) {
-          reply = content.trim();
+        const rawContent = aiResp.choices?.[0]?.message?.content;
+        if (rawContent && rawContent.trim()) {
+          reply = sanitizeAIReply(rawContent);
           console.log(`💬 [AI REPLY SUCCESS (${modelName})]\n${reply}\n`);
           break;
         }
