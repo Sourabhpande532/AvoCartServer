@@ -10,7 +10,12 @@ const descriptions = {
   "dress": "Make a stunning impression with this elegant dress. Carefully tailored to accentuate your silhouette with graceful lines. Made from lightweight, flowy fabric that feels amazing against your skin. Perfect for evening events, parties, or special occasions.",
   "coat": "Brave the elements in luxury with this sophisticated coat. Featuring superior insulation to keep you warm on the coldest days. Designed with a timeless aesthetic that complements any outfit. Includes a weather-resistant outer layer for maximum protection.",
   "bag": "Carry your essentials in style with this highly functional bag. Built with premium, durable materials to withstand daily use. Features multiple compartments for effortless organization. A perfect accessory that combines fashion and practicality.",
-  "jeans": "Classic style meets everyday comfort in these premium jeans. Constructed from durable, high-quality denim that gets better with time. Designed with a versatile fit that seamlessly transitions from day to night. Features reinforced stitching for long-lasting wear."
+  "jeans": "Classic style meets everyday comfort in these premium jeans. Constructed from durable, high-quality denim that gets better with time. Designed with a versatile fit that seamlessly transitions from day to night. Features reinforced stitching for long-lasting wear.",
+  "headphone": "Immerse yourself in premium high-fidelity audio with hybrid active noise cancellation, custom acoustic drivers, ambient sound mode, and up to 40 hours of playtime.",
+  "watch": "Stay connected and track your daily wellness with an ultra-bright AMOLED display, real-time heart rate monitor, sleep tracking, and 7-day battery life.",
+  "speaker": "Deliver bold 360-degree stereo sound anywhere you go with deep bass, IPX7 waterproof durability, and 15 hours of continuous music.",
+  "saree": "An elegant handcrafted saree featuring timeless motifs, a lustrous border, and a matching unstitched blouse piece for traditional celebrations.",
+  "frock": "A delightful twirl-ready party frock for girls, featuring gentle inner lining, delicate lace accents, and vibrant color-fast fabric."
 };
 
 function getDesc(title) {
