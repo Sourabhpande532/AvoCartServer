@@ -42,7 +42,7 @@ app.post("/", async (req, res) => {
 // DELETE ORDER
 app.delete("/:id", async (req, res) => {
   try {
-    const deleted = await Order.findByIdAndDelete(req.params.id);
+    const deleted = await Order.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
     if (!deleted)
       return res.status(404).json({ success: false, message: "Order not found" });
     return res.status(200).json({ success: true, message: "Order deleted successfully", data: { deleted } });

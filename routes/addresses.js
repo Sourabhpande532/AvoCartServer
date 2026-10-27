@@ -21,7 +21,7 @@ app.get("/", async (req, res) => {
 app.post("/", async (req, res) => {
   try {
     const userId = req.user.userId;
-    const addr = await Address.create({ ...req.body, userId });
+    await Address.create({ ...req.body, userId });
     const addresses = await Address.find({ userId });
     return res.status(200).json({ success: true, message: "Address added successfully", data: { addresses } });
   } catch (error) {
@@ -33,7 +33,11 @@ app.post("/", async (req, res) => {
 // UPDATE ADDRESS
 app.put("/:id", async (req, res) => {
   try {
-    const addr = await Address.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const addr = await Address.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      req.body,
+      { new: true }
+    );
     if (!addr)
       return res.status(404).json({ success: false, message: "Address not found" });
     return res.status(200).json({ success: true, message: "Address updated successfully", data: { address: addr } });
@@ -46,7 +50,7 @@ app.put("/:id", async (req, res) => {
 // DELETE ADDRESS
 app.delete("/:id", async (req, res) => {
   try {
-    const deleted = await Address.findByIdAndDelete(req.params.id);
+    const deleted = await Address.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
     if (!deleted)
       return res.status(404).json({ success: false, message: "Address not found" });
     return res.status(200).json({ success: true, message: "Address deleted successfully", data: { deleted } });

@@ -47,7 +47,7 @@ app.post("/", async (req, res) => {
 // DELETE ITEM FROM WISHLIST
 app.delete("/:id", async (req, res) => {
   try {
-    const deleted = await WishlistItem.findByIdAndDelete(req.params.id);
+    const deleted = await WishlistItem.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
     if (!deleted)
       return res.status(404).json({ success: false, message: "Wishlist item not found" });
 

@@ -1,8 +1,8 @@
-# E-Commerce App
+# AvoCart — E-Commerce Backend API
 
 ---
 
-Build a complete e-commerce application with a React frontend and Node/Express + MongoDB backend that supports product browsing, filtering/sorting, cart & wishlist flows, address/checkout, and order history.
+A complete Node.js/Express + MongoDB backend for the AvoCart e-commerce application supporting product browsing, filtering/sorting, cart & wishlist flows, address management, checkout, OAuth 2.0 + JWT authentication, AI assistant, and order history.
 
 ---
 
@@ -14,23 +14,20 @@ Build a complete e-commerce application with a React frontend and Node/Express +
 
 ## Quick Start
 
-```
-git clone https://github.com/Sourabhpande532/AvoCartClient.git
-cd AvoCartClient
+```bash
+git clone https://github.com/Sourabhpande532/AvoCartServer.git
+cd AvoCartServer
 npm install
-npm run dev  # or 'npm start' / 'yarn dev'
-
+npm run dev
 ```
 
 ---
 
 ## Technologies
 
-- React JS
-- React Router
-- Node Js
-- Express Js
-- Mongo DB
+- Node.js & Express.js
+- MongoDB & Mongoose
+- Passport.js (Google & GitHub OAuth 2.0) & JWT Authentication
 - RESTful APIs
 
 ---
@@ -47,25 +44,25 @@ Watch a walkthrough (5-7 minutes) of all major features of this app:<br>
 **Home & Product Browsing**
 
 - Home page with featured categories and smooth navigation to product listings.
-- Product listing page with filters(category,rating slider) & price sorting (low ↔ high)
+- Product listing page with filters (category, rating slider, price range) & price sorting (low ↔ high).
 
 **Product Experience**
 
-- Product cards showing image, name, price, rating, and quick actions (Add to Cart / Wishlist)
-- Detailed product page with full information and related products
+- Product cards showing image, name, price, rating, and quick actions (Add to Cart / Wishlist).
+- Detailed product page with full information and related products.
 
 **Cart & Wishlist**
 
-- Cart and Wishlist pages to add/remove items, update quantity, and move items between them
+- Cart and Wishlist endpoints to add/remove items, update quantity, and move items between them.
 
 **User Profile**
 
-- Profile page with address management and order history tracking
+- Profile endpoints with address management and order history tracking.
 
 **General Features**
 
-- Global search in navbar, loading states, and user alerts for actions
-- Fully responsive UI for desktop and mobile experience
+- Global search in navbar, loading states, and user alerts for actions.
+- Fully responsive UI for desktop and mobile experience.
 
 ---
 
@@ -73,29 +70,26 @@ Watch a walkthrough (5-7 minutes) of all major features of this app:<br>
 
 ### GET /api/products
 
-Retrieve all product with support for filtering,sorting.
+Retrieve all products with support for filtering and sorting.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, title, price, category, rating, stockInCount, images,sizes,discount,deliveryCharge },
-  ...
+  { "_id": "...", "title": "...", "price": 1999, "category": {}, "rating": 4.5, "countInStock": 15, "images": [], "discount": 25, "deliveryCharge": 199 }
 ]
-
 ```
 
 ### GET /api/products/:productId
 
-Fetch Detailed information for a single product.
+Fetch detailed information for a single product.
 
 Sample Response:
 
-```
+```json
 {
-  _id, title, description, price, category, rating, stockInCount, images,sizes, discount,deliveryCharge
+  "_id": "...", "title": "...", "description": "...", "price": 1999, "category": {}, "rating": 4.5, "countInStock": 15, "images": [], "discount": 25, "deliveryCharge": 199
 }
-
 ```
 
 ### GET /api/categories
@@ -104,84 +98,77 @@ Retrieve all product categories.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, image, description }
+  { "_id": "...", "name": "Men", "image": "...", "description": "..." }
 ]
-
 ```
 
-### GET /api/categores/:categoryId
+### GET /api/categories/:categoryId
 
-Get all products under a specific category.
+Get category details by ID.
 
 Sample Response:
 
-```
+```json
 {
-  _id,
-  name,
-  products: [{ _id, title, price }]
+  "_id": "...",
+  "name": "Men",
+  "image": "...",
+  "description": "..."
 }
-
 ```
 
 ### POST /api/cart
 
-Add a product to the user’s cart (protected route).
+Add a product to the user's cart (protected route).
 
 Sample Response:
 
-```
-
-{ _id, userId, productId, qty,size }
-
+```json
+{ "_id": "...", "userId": "...", "product": {}, "qty": 1, "size": "M" }
 ```
 
 ### GET /api/cart
 
-Fetch all items in user’s cart by model-referencing.
+Fetch all items in the user's cart.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, product, qty, size }
+  { "_id": "...", "product": {}, "qty": 1, "size": "M" }
 ]
-
 ```
 
-## PUT /api/cart/:id
+### PUT /api/cart/:id
 
 Update quantity of a cart item.
 
 Sample Response:
 
+```json
+{ "_id": "...", "product": "...", "qty": 2 }
 ```
-{ _id, productId, qty }
 
-```
-
-## DELETE /api/cart/:id
+### DELETE /api/cart/:id
 
 Remove an item from the cart.
 
 Sample Response:
 
+```json
+{ "success": true }
 ```
-{ success: true }
 
-```
-
-## POST /api/wishlist
+### POST /api/wishlist
 
 Add a product to the wishlist.
 
 Sample Response:
 
-```
-{ _id, userId, productId }
-
+```json
+{ "_id": "...", "userId": "...", "product": {} }
 ```
 
 ### GET /api/wishlist
@@ -190,11 +177,10 @@ Retrieve all wishlist items.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, product },...
+  { "_id": "...", "product": {} }
 ]
-
 ```
 
 ### DELETE /api/wishlist/:id
@@ -203,50 +189,50 @@ Remove a product from the wishlist.
 
 Sample Response:
 
-```
-{ success: true }
+```json
+{ "success": true }
 ```
 
-### POST /api/address
+### POST /api/addresses
 
 Add a new delivery address.
 
 Sample Response:
 
-```
-{ _id, name, street, city, state, zip }
+```json
+{ "_id": "...", "name": "...", "street": "...", "city": "...", "state": "...", "zip": "110001", "phone": "9876543210" }
 ```
 
-### GET /api/address
+### GET /api/addresses
 
 Retrieve all saved addresses for the user.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, name, street, city, state, zip }
+  { "_id": "...", "name": "...", "street": "...", "city": "...", "state": "...", "zip": "110001", "phone": "9876543210" }
 ]
 ```
 
-### PUT /api/address/:id
+### PUT /api/addresses/:id
 
 Update an existing address.
 
 Sample Response:
 
-```
-{ _id, name, street, city, state, zip }
+```json
+{ "_id": "...", "name": "...", "street": "...", "city": "...", "state": "...", "zip": "110001", "phone": "9876543210" }
 ```
 
-### DELETE /api/address/:id
+### DELETE /api/addresses/:id
 
 Delete an address.
 
 Sample Response:
 
-```
-{ success: true }
+```json
+{ "success": true }
 ```
 
 ### POST /api/orders
@@ -255,8 +241,8 @@ Create a new order from cart items.
 
 Sample Response:
 
-```
-{ _id, userId, items, totalAmount, status }
+```json
+{ "_id": "...", "userId": "...", "items": [], "total": 1599, "address": {} }
 ```
 
 ### GET /api/orders
@@ -265,11 +251,10 @@ Fetch all orders for the logged-in user.
 
 Sample Response:
 
-```
+```json
 [
-  { _id, items, totalAmount, status, createdAt }
+  { "_id": "...", "items": [], "total": 1599, "address": {}, "createdAt": "..." }
 ]
-
 ```
 
 ---
@@ -277,34 +262,32 @@ Sample Response:
 ## Deployment & Links
 
 - Frontend GitHub: https://github.com/Sourabhpande532/AvoCartClient
-
 - Backend GitHub: https://github.com/Sourabhpande532/AvoCartServer
 
 ---
 
 ## Environment Setup
 
-**Backend(/server/.env)**
+**Backend (`/server/.env`)**
 
-```
-# Server
+```env
 PORT=4000
-NODE_ENV=development
-
-# Database
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/anvaya
-
-# CORS
-CLIENT_URL=http://localhost:3000
-
+MONGO_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/avocart
+JWT_SECRET=your_jwt_secret
+FRONTEND_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+CLIENT_ID=your_github_client_id
+CLIENT_SECRET=your_github_client_secret
+CALLBACK_URL=http://localhost:4000/auth/google/callback
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
-**Frontend**
+**Frontend (`/client/.env`)**
 
-```
-# API Base URL
-REACT_APP_BASE_URL=http://localhost:5000/api
-
+```env
+REACT_APP_API_URL=http://localhost:4000/api
+REACT_APP_SERVER_URL=http://localhost:4000
 ```
 
 ## Contact

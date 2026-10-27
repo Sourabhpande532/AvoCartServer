@@ -31,8 +31,12 @@ app.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "productId is required" });
 
     let item = await CartItem.findOne({ userId, product: productId, size });
+    if (!item) {
+      item = await CartItem.findOne({ userId, product: productId });
+    }
     if (item) {
       item.qty += Number(qty);
+      if (size) item.size = size;
       await item.save();
     } else {
       item = await CartItem.create({ userId, product: productId, qty: Number(qty), size });
@@ -52,11 +56,11 @@ app.put("/:id", async (req, res) => {
     if (qty === undefined)
       return res.status(400).json({ success: false, message: "qty is required" });
 
-    const item = await CartItem.findById(req.params.id);
+    const item = await CartItem.findOne({ _id: req.params.id, userId: req.user.userId });
     if (!item)
       return res.status(404).json({ success: false, message: "Cart item not found" });
 
-    item.qty = qty;
+    item.qty = Math.max(1, Number(qty));
     await item.save();
     return res.status(200).json({ success: true, message: "Cart item updated successfully", data: { item } });
   } catch (error) {
@@ -68,7 +72,7 @@ app.put("/:id", async (req, res) => {
 // DELETE CART ITEM
 app.delete("/:id", async (req, res) => {
   try {
-    const cartItem = await CartItem.findByIdAndDelete(req.params.id);
+    const cartItem = await CartItem.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
     if (!cartItem)
       return res.status(404).json({ success: false, message: "Cart item not found" });
 

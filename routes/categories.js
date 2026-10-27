@@ -7,7 +7,7 @@ app.post("/", async (req, res) => {
   try {
     const category = await Category.create(req.body);
     res.json({
-      suceess: true,
+      success: true,
       message: "Category created successfully",
       data: { category },
     });
@@ -26,24 +26,8 @@ app.get("/", async (req, res) => {
     const categories = await Category.find();
     res.json({
       success: true,
-      message: "Category created successfully",
+      message: "Categories fetched successfully",
       data: { categories },
-      meta: {
-        timestamp: new Date(),
-        requestId: "REQ-" + Date.now(),
-      },
-      collection: [
-        {
-          name: "Summer collection",
-          description: "lorem text out best winter xl texhe dfh",
-          img: "https://placehold.co/100",
-        },
-        {
-          name: "Summer collection",
-          description: "lorem text out best winter xl texhe df",
-          img: "https://placehold.co/150",
-        },
-      ],
     });
   } catch (error) {
     console.error("Error fetching categories:", error.message);
@@ -59,21 +43,11 @@ app.get("/:categoryId", async (req, res) => {
   try {
     const category = await Category.findById(req.params.categoryId);
     if (!category)
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ success: false, message: "Category not found" });
     res.json({
-      data: { category },
-      message: "Category fetched successfully",
       success: true,
-      meta: {
-        requestId: "REQ-" + Date.now(),
-        apiVersion: "1.1",
-        timestamp: new Date(),
-      },
-      user: {
-        id: "123",
-        role: "admin",
-        permissions: ["create", "update"],
-      },
+      message: "Category fetched successfully",
+      data: { category },
     });
   } catch (error) {
     console.error("Error fetching category:", error.message);

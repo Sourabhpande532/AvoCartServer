@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const { initializeDatabase } = require("./db/db.connect");
 const express = require("express");
 const app = express();
@@ -9,6 +10,8 @@ const passport = require("./config/passport");
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
   "https://avo-cart-client.vercel.app"
 ].filter(Boolean);
 
@@ -24,7 +27,7 @@ const corsOption = {
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
@@ -43,8 +46,7 @@ app.use(async (req, res, next) => {
     console.error("Database connection middleware error:", err.message);
     res.status(500).json({
       success: false,
-      message: "Database connection failed. Please verify MONGO_URL configuration.",
-      error: err.message
+      message: "Database connection failed. Please try again later."
     });
   }
 });

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const dns = require("dns");
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 // Safely configure DNS override for local Windows environment without breaking Vercel serverless containers
 try {
